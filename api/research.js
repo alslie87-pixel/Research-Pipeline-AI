@@ -236,7 +236,7 @@ module.exports = async function handler(req, res) {
   const { topic, mode, urls, scoutContext } = req.body;
   let fullText = "";
 
-  const tools = mode === "scout" || mode === "full"
+  const tools = mode === "full"
     ? [{ type: "web_search_20250305", name: "web_search" }]
     : [];
 
