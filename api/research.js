@@ -19,23 +19,17 @@ Skip: AI influencer content, vendor marketing without independent validation, ge
 
 For each result provide:
 - Title
-- Source (full clickable URL)
+- Source: [full URL on its own line]
 - Type: article / video / podcast / tool
 - One-line summary
 - Relevance score 1-5 with one sentence of reasoning
 
-Group results by theme. Prioritize last 12 months. Max 10 results.
-
-IMPORTANT: At the very end, add a section called "## URL LIST FOR ANALYZER" and list ONLY the URLs, one per line, like this:
-https://example.com/article-1
-https://example.com/article-2
-
-Include relevant YouTube demos in a separate section before the URL list.`;
+Group results by theme. Prioritize last 12 months. Max 10 results. Include relevant YouTube demos in a separate section.`;
   }
 
   if (mode === "analyze") {
     const contextSection = scoutContext
-      ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext}\n\n---\n`
+      ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext.slice(0, 1500)}\n\n---\n`
       : "";
 
     return `Analyze the following sources and produce Deep Analyzer notes and a Weekly Digest.
@@ -43,7 +37,7 @@ ${contextSection}
 SOURCES TO ANALYZE:
 ${urls}
 
-For each source fetch and analyze the content, then produce this exact structure:
+For each source produce this exact structure:
 
 TITLE:
 SOURCE & LINK:
@@ -76,17 +70,34 @@ NOTION TAGS: from #use-case #tool #automation #sales #marketing #operations #fin
 Then synthesize everything into the Weekly Digest:
 
 ## 1. SESSION BRIEF
+This week's topic:
+Sessions covered:
+Strongest finding:
+Watch out for:
+Maturity signal:
+
 ## 2. TOP 3 INSIGHTS
+For each: Insight / Evidence quality (STRONG/MODERATE/WEAK) / Relevant to / So what.
+
 ## 3. ACTION STACK
+BUILD OR TEST THIS WEEK:
+DEMO OR EVALUATE:
+RESEARCH DEEPER NEXT SESSION:
+
 ## 4. NOTION DATABASE ROWS
 | Name | Category | Function | Source | One-line summary | Evidence | Status | Tags |
+
 ## 5. RESEARCH BACKLOG
+UNVERIFIED:
+UNDEREXPLORED:
+READY TO BUILD:
+
 ## 6. WEEKLY SNAPSHOT
+3-4 sentences. Paste-ready for Slack or client update.
 
 Quality rule: STRONG = named company + verified metric + independent. MODERATE = one but not both. WEAK = neither. Flag WEAK sources visibly.`;
   }
 
-  // Full pipeline (kept for Pro plan use)
   return `Run my full 3-stage AI research pipeline on: "${topic}"
 
 ---
@@ -225,7 +236,6 @@ module.exports = async function handler(req, res) {
   const { topic, mode, urls, scoutContext } = req.body;
   let fullText = "";
 
-  // Scout uses web search. Analyze does not (stays under 60s timeout).
   const tools = mode === "scout" || mode === "full"
     ? [{ type: "web_search_20250305", name: "web_search" }]
     : [];
@@ -247,13 +257,13 @@ module.exports = async function handler(req, res) {
         if (res.flush) res.flush();
       }
       if (event.type === "message_stop") {
-        // Extract URLs from scout output to send back to frontend
         let extractedUrls = [];
-if (mode === "scout") {
-  const urlMatches = fullText.match(/https?:\/\/[^\s)>\]"]+/g) || [];
-  // deduplicate
-  extractedUrls = [...new Set(urlMatches)];
-}
+        if (mode === "scout") {
+          const urlMatches = fullText.match(/https?:\/\/[^\s<>)"'\]]+/g) || [];
+          const cleaned = urlMatches.map(u => u.replace(/[.,;:]+$/, ""));
+          extractedUrls = [...new Set(cleaned)].filter(u => u.length > 15);
+          console.log("Extracted URLs count:", extractedUrls.length);
+        }
         try {
           const notionPageId = await postToNotion(topic, mode, fullText);
           res.write(`data: ${JSON.stringify({ done: true, notionPageId, extractedUrls })}\n\n`);
