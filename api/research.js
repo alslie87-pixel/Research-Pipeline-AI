@@ -35,7 +35,7 @@ Include relevant YouTube demos in a separate section before the URL list.`;
 
   if (mode === "analyze") {
     const contextSection = scoutContext
-      ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext.slice(0, 1500)}\n\n---\n`
+      ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext}\n\n---\n`
       : "";
 
     return `Analyze the following sources and produce Deep Analyzer notes and a Weekly Digest.
