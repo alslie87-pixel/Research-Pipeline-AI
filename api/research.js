@@ -35,9 +35,8 @@ Include relevant YouTube demos in a separate section before the URL list.`;
 
   if (mode === "analyze") {
     const contextSection = scoutContext
-      const contextSection = scoutContext
-  ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext.slice(0, 1500)}\n\n---\n`
-  : "";
+      ? `\n\nSCOUT SUMMARY (use this to inform your analysis):\n${scoutContext.slice(0, 1500)}\n\n---\n`
+      : "";
 
     return `Analyze the following sources and produce Deep Analyzer notes and a Weekly Digest.
 ${contextSection}
@@ -56,13 +55,13 @@ CORE IDEA (2-3 sentences, plain language, no jargon):
 
 WHO IS USING IT: Named companies or industries only. If none: "UNVERIFIED - no named companies in this source."
 
-PROOF OF VALUE: Every metric (revenue, cost savings, time saved, conversion rates). For each: the claim / who measured it / confidence level HIGH/MEDIUM/LOW.
+PROOF OF VALUE: Every metric. For each: the claim / who measured it / confidence level HIGH/MEDIUM/LOW.
 
 KEY AI USE CASES MENTIONED:
 
 WHAT YOU CAN ACTUALLY BUILD: Step-by-step workflow. If not enough detail, say so.
 
-DIFFICULTY: Beginner / Intermediate / Advanced - one sentence explaining why.
+DIFFICULTY: Beginner / Intermediate / Advanced - one sentence.
 
 TOOLS & TECH REFERENCED:
 
@@ -77,30 +76,12 @@ NOTION TAGS: from #use-case #tool #automation #sales #marketing #operations #fin
 Then synthesize everything into the Weekly Digest:
 
 ## 1. SESSION BRIEF
-This week's topic:
-Sessions covered:
-Strongest finding:
-Watch out for:
-Maturity signal:
-
 ## 2. TOP 3 INSIGHTS
-For each: Insight / Evidence quality (STRONG/MODERATE/WEAK) / Relevant to / So what.
-
 ## 3. ACTION STACK
-BUILD OR TEST THIS WEEK:
-DEMO OR EVALUATE:
-RESEARCH DEEPER NEXT SESSION:
-
 ## 4. NOTION DATABASE ROWS
 | Name | Category | Function | Source | One-line summary | Evidence | Status | Tags |
-
 ## 5. RESEARCH BACKLOG
-UNVERIFIED:
-UNDEREXPLORED:
-READY TO BUILD:
-
 ## 6. WEEKLY SNAPSHOT
-3-4 sentences. Paste-ready for Slack or client update.
 
 Quality rule: STRONG = named company + verified metric + independent. MODERATE = one but not both. WEAK = neither. Flag WEAK sources visibly.`;
   }
