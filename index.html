@@ -492,7 +492,7 @@
       : `<button class="btn-action btn-notion" onclick="copyNotion()">📋 Copy for Notion</button>`;
 
     const analyzeBtn = (currentMode === "scout" && extractedUrls && extractedUrls.length > 0)
-      ? `<button class="btn-action" style="background:#EEF0FF;border-color:#C4C0FF;color:#3730A3;font-weight:600;" onclick="analyzeScoutResults()">→ Analyze these results</button>`
+      ? `<button id="analyze-btn" class="btn-action" style="background:#E5E7EB;border-color:#D1D5DB;color:#9CA3AF;font-weight:600;cursor:not-allowed;" disabled>→ Analyze (60s cooldown)</button>`
       : "";
 
     document.getElementById("toolbar-actions").innerHTML = `
@@ -503,6 +503,28 @@
     `;
     document.getElementById("export-info").style.display = "flex";
     document.getElementById("run-btn").disabled = false;
+
+    // Countdown to enable the Analyze button
+    if (currentMode === "scout" && extractedUrls && extractedUrls.length > 0) {
+      let seconds = 60;
+      const interval = setInterval(() => {
+        seconds--;
+        const btn = document.getElementById("analyze-btn");
+        if (!btn) { clearInterval(interval); return; }
+        if (seconds <= 0) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.style.background = "#EEF0FF";
+          btn.style.borderColor = "#C4C0FF";
+          btn.style.color = "#3730A3";
+          btn.style.cursor = "pointer";
+          btn.textContent = "→ Analyze these results";
+          btn.onclick = analyzeScoutResults;
+        } else {
+          btn.textContent = `→ Analyze (${seconds}s)`;
+        }
+      }, 1000);
+    }
   }
 
   function analyzeScoutResults() {
