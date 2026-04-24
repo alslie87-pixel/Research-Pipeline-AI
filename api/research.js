@@ -267,12 +267,11 @@ module.exports = async function handler(req, res) {
       if (event.type === "message_stop") {
         // Extract URLs from scout output to send back to frontend
         let extractedUrls = [];
-        if (mode === "scout") {
-          const urlMatch = fullText.match(/## URL LIST FOR ANALYZER\n([\s\S]*?)(?:\n##|$)/);
-          if (urlMatch) {
-            extractedUrls = urlMatch[1].trim().split("\n").filter(u => u.match(/^https?:\/\//));
-          }
-        }
+if (mode === "scout") {
+  const urlMatches = fullText.match(/https?:\/\/[^\s)>\]"]+/g) || [];
+  // deduplicate
+  extractedUrls = [...new Set(urlMatches)];
+}
         try {
           const notionPageId = await postToNotion(topic, mode, fullText);
           res.write(`data: ${JSON.stringify({ done: true, notionPageId, extractedUrls })}\n\n`);
