@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Research Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #6C63FF;
+      --purple-dark: #3730A3;
+      --purple-light: #EEF0FF;
+      --teal: #0EA5A0;
+      --teal-light: #E0F9F6;
+      --green: #10B981;
+      --green-light: #D1FAE5;
+      --amber: #F59E0B;
+      --amber-light: #FEF3C7;
+      --red: #EF4444;
+      --red-light: #FEE2E2;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-400: #9CA3AF;
+      --gray-600: #4B5563;
+      --gray-800: #1F2937;
+      --white: #ffffff;
+      --font: 'Inter', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: linear-gradient(135deg, #F0EFFF 0%, #F9FAFB 55%, #E0F9F6 100%);
+      min-height: 100vh;
+      color: var(--gray-800);
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--white);
+      border-bottom: 1.5px solid var(--gray-200);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-weight: 800; font-size: 16px; letter-spacing: -0.02em; }
+    .logo-sub { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+    .header-badge {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      background: var(--purple-light); color: var(--purple-dark);
+      border-radius: 20px; border: 1px solid #D4D1FF;
+    }
+
+    /* ── Main layout ── */
+    main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      border: 1.5px solid var(--gray-200);
+      padding: 28px 32px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+
+    /* ── Stage bar ── */
+    .stage-bar { display: flex; align-items: center; margin-bottom: 28px; }
+    .stage-item { display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: var(--gray-100); transition: all 0.4s; }
+    .stage-item.active { background: var(--purple-light); border-color: #C4C0FF; }
+    .stage-item.done { background: var(--green-light); border-color: #A7F3D0; }
+    .stage-dot {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      background: var(--gray-200); color: var(--gray-400);
+      transition: all 0.4s; flex-shrink: 0;
+    }
+    .stage-item.active .stage-dot { background: var(--purple); color: white; }
+    .stage-item.done .stage-dot { background: var(--green); color: white; }
+    .stage-label { font-size: 13px; font-weight: 600; color: var(--gray-400); transition: color 0.4s; }
+    .stage-item.active .stage-label { color: var(--purple-dark); }
+    .stage-item.done .stage-label { color: #065F46; }
+    .stage-connector { flex: 1; height: 1.5px; background: var(--gray-200); transition: background 0.4s; max-width: 32px; }
+    .stage-connector.done { background: var(--green); }
+
+    /* ── Form elements ── */
+    label { font-size: 13px; font-weight: 600; color: var(--gray-600); display: block; margin-bottom: 6px; }
+    textarea, input[type="text"] {
+      width: 100%; font-family: var(--font); font-size: 15px;
+      padding: 12px 14px; border-radius: 10px;
+      border: 1.5px solid var(--gray-200); color: var(--gray-800);
+      transition: border 0.2s, box-shadow 0.2s; resize: vertical;
+      background: var(--white);
+    }
+    textarea:focus, input[type="text"]:focus {
+      outline: none; border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.12);
+    }
+    textarea.topic { min-height: 80px; }
+    textarea.urls { min-height: 64px; font-family: var(--mono); font-size: 13px; }
+
+    /* ── Mode selector ── */
+    .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0 20px; }
+    .mode-card {
+      padding: 11px 14px; border-radius: 10px; cursor: pointer;
+      border: 1.5px solid var(--gray-200); background: var(--white);
+      transition: all 0.2s;
+    }
+    .mode-card:hover { border-color: #C4C0FF; background: #FAFAFF; }
+    .mode-card.selected { border-color: var(--purple); background: var(--purple-light); }
+    .mode-card-title { font-size: 13px; font-weight: 700; color: var(--gray-800); }
+    .mode-card.selected .mode-card-title { color: var(--purple-dark); }
+    .mode-card-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .mode-card.selected .mode-card-sub { color: var(--purple); }
+
+    /* ── Buttons ── */
+    .btn-run {
+      width: 100%; padding: 14px; border-radius: 10px;
+      background: var(--purple); color: white; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.2s, transform 0.1s;
+      font-family: var(--font);
+    }
+    .btn-run:hover:not(:disabled) { background: #5B52E0; }
+    .btn-run:active:not(:disabled) { transform: scale(0.98); }
+    .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-action {
+      padding: 7px 14px; border-radius: 8px;
+      border: 1.5px solid var(--gray-200); background: var(--white);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: var(--font); color: var(--gray-800);
+    }
+    .btn-action:hover { background: var(--gray-50); }
+    .btn-pdf {
+      background: var(--purple-light); border-color: #C4C0FF;
+      color: var(--purple-dark); font-weight: 600;
+    }
+    .btn-pdf:hover { background: #E4E2FF; }
+    .btn-notion {
+      background: var(--teal-light); border-color: #99E6E2;
+      color: #0C6B67; font-weight: 600;
+    }
+    .btn-notion:hover { background: #C0F2EF; }
+    .btn-stop { color: var(--red); border-color: #FECACA; }
+    .btn-stop:hover { background: var(--red-light); }
+
+    /* ── Output area ── */
+    .output-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+    }
+    .output-status { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .output-status.running { color: var(--purple); }
+    .output-status.done { color: var(--green); }
+    .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .output-box {
+      background: var(--white); border-radius: 14px;
+      border: 1.5px solid var(--gray-200);
+      padding: 24px 28px;
+      max-height: 600px; overflow-y: auto;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+      font-family: 'Georgia', serif;
+      font-size: 14px; line-height: 1.8; color: var(--gray-800);
+    }
+
+    /* ── Markdown styles inside output ── */
+    .output-box h1 { font-size: 20px; font-weight: 800; margin: 24px 0 10px; color: var(--gray-800); }
+    .output-box h2 {
+      font-size: 16px; font-weight: 700; margin: 24px 0 8px;
+      color: var(--purple-dark); border-bottom: 2px solid var(--purple-light);
+      padding-bottom: 5px; font-family: var(--font);
+    }
+    .output-box h3 { font-size: 14px; font-weight: 700; margin: 14px 0 4px; font-family: var(--font); }
+    .output-box p { margin-bottom: 6px; }
+    .output-box ul { padding-left: 20px; margin-bottom: 8px; }
+    .output-box li { margin-bottom: 3px; }
+    .output-box table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; font-family: var(--font); }
+    .output-box th { background: var(--purple-light); color: var(--purple-dark); padding: 6px 10px; text-align: left; border: 1px solid var(--gray-200); }
+    .output-box td { padding: 5px 10px; border: 1px solid var(--gray-200); vertical-align: top; }
+    .output-box tr:nth-child(even) td { background: var(--gray-50); }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      font-family: var(--mono); letter-spacing: 0.03em;
+    }
+    .badge-strong { background: var(--green-light); color: #065F46; border: 1px solid #A7F3D0; }
+    .badge-moderate { background: var(--amber-light); color: #92400E; border: 1px solid #FDE68A; }
+    .badge-weak { background: var(--red-light); color: #991B1B; border: 1px solid #FECACA; }
+
+    /* ── Export info ── */
+    .export-info {
+      margin-top: 14px; background: var(--teal-light);
+      border: 1px solid #99E6E2; border-radius: 10px;
+      padding: 12px 16px; font-size: 13px; color: #0C6B67;
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(108,99,255,0.2);
+      border-top-color: var(--purple);
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    .cursor {
+      display: inline-block; width: 2px; height: 16px;
+      background: var(--purple); border-radius: 1px;
+      animation: blink 1s steps(2) infinite; margin-left: 2px; vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes blink { to { opacity: 0; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp 0.35s ease forwards; }
+
+    /* ── Error ── */
+    .error-box {
+      margin-top: 16px; background: var(--red-light);
+      border: 1px solid #FECACA; border-radius: 10px;
+      padding: 12px 16px; font-size: 13px; color: var(--red);
+    }
+
+    @media (max-width: 600px) {
+      main { padding: 20px 16px 60px; }
+      .card { padding: 20px 18px; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .output-toolbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    <div>
+      <div class="logo-text">AI Research Pipeline</div>
+      <div class="logo-sub">Scout · Analyze · Digest · Export</div>
+    </div>
+  </div>
+  <div class="header-badge">Powered by Claude</div>
+</header>
+
+<main>
+  <!-- Input panel -->
+  <div class="card fade-up" id="input-panel">
+    <div class="stage-bar" id="stage-bar">
+      <div class="stage-item" id="stage-0">
+        <div class="stage-dot">1</div>
+        <span class="stage-label">Scout</span>
+      </div>
+      <div class="stage-connector" id="conn-0"></div>
+      <div class="stage-item" id="stage-1">
+        <div class="stage-dot">2</div>
+        <span class="stage-label">Analyze</span>
+      </div>
+      <div class="stage-connector" id="conn-1"></div>
+      <div class="stage-item" id="stage-2">
+        <div class="stage-dot">3</div>
+        <span class="stage-label">Digest</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 18px;">
+      <label for="topic">Research topic</label>
+      <textarea id="topic" class="topic" placeholder="e.g. AI agents for sales automation, LLM use cases in operations 2025, RAG pipelines for customer service..."></textarea>
+    </div>
+
+    <div class="mode-grid">
+      <div class="mode-card selected" data-mode="full" onclick="selectMode('full')">
+        <div class="mode-card-title">Full pipeline</div>
+        <div class="mode-card-sub">Scout → Analyze → Digest</div>
+      </div>
+      <div class="mode-card" data-mode="scout" onclick="selectMode('scout')">
+        <div class="mode-card-title">Scout only</div>
+        <div class="mode-card-sub">Find & rank sources</div>
+      </div>
+      <div class="mode-card" data-mode="analyze" onclick="selectMode('analyze')">
+        <div class="mode-card-title">Analyze + Digest</div>
+        <div class="mode-card-sub">Paste URLs below</div>
+      </div>
+    </div>
+
+    <div id="url-section" style="display:none; margin-bottom: 18px;">
+      <label for="urls">URLs or notes to analyze (one per line)</label>
+      <textarea id="urls" class="urls" placeholder="https://..."></textarea>
+    </div>
+
+    <button class="btn-run" id="run-btn" onclick="runPipeline()">
+      ▶ Run Research Pipeline
+    </button>
+  </div>
+
+  <!-- Output panel -->
+  <div id="output-panel" style="display:none; margin-top: 24px;" class="fade-up">
+    <div class="output-toolbar">
+      <div class="output-status" id="output-status">
+        <div class="spinner"></div> Researching...
+      </div>
+      <div class="toolbar-actions" id="toolbar-actions">
+        <button class="btn-action btn-stop" onclick="stopStream()">■ Stop</button>
+      </div>
+    </div>
+
+    <div class="output-box" id="output-box"></div>
+
+    <div class="export-info" id="export-info" style="display:none;">
+      <span><strong>📋 Notion:</strong> "Copy for Notion" puts clean markdown on your clipboard — paste into any Notion page.</span>
+      <span><strong>📄 PDF:</strong> "Download PDF" generates a formatted PDF file directly.</span>
+    </div>
+
+    <div class="error-box" id="error-box" style="display:none;"></div>
+  </div>
+</main>
+
+<script>
+  let currentMode = "full";
+  let fullText = "";
+  let charCount = 0;
+  let streaming = false;
+  let abortController = null;
+
+  function selectMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll(".mode-card").forEach(c => {
+      c.classList.toggle("selected", c.dataset.mode === mode);
+    });
+    document.getElementById("url-section").style.display = mode === "analyze" ? "block" : "none";
+  }
+
+  function setStage(n) {
+    for (let i = 0; i < 3; i++) {
+      const el = document.getElementById("stage-" + i);
+      el.classList.remove("active", "done");
+      if (i < n) el.classList.add("done");
+      else if (i === n) el.classList.add("active");
+    }
+    for (let i = 0; i < 2; i++) {
+      const c = document.getElementById("conn-" + i);
+      c.classList.toggle("done", i < n);
+    }
+  }
+
+  function renderMarkdown(text) {
+    let html = text
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\bSTRONG\b/g, '<span class="badge badge-strong">STRONG</span>')
+      .replace(/\bMODERATE\b/g, '<span class="badge badge-moderate">MODERATE</span>')
+      .replace(/\bWEAK\b/g, '<span class="badge badge-weak">WEAK</span>');
+
+    // Tables
+    html = html.replace(/((\|.+\|\n?)+)/g, (match) => {
+      const rows = match.trim().split("\n");
+      let table = "<table>";
+      rows.forEach((row, i) => {
+        if (row.match(/^\|[-:| ]+\|$/)) return;
+        const cells = row.split("|").filter(c => c.trim() !== "").map(c => c.trim());
+        const tag = i === 0 ? "th" : "td";
+        table += "<tr>" + cells.map(c => `<${tag}>${c}</${tag}>`).join("") + "</tr>";
+      });
+      return table + "</table>";
+    });
+
+    // Lists
+    html = html.replace(/^- (.+)$/gm, "<li>$1</li>").replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+
+    // Paragraphs
+    html = html.replace(/\n\n/g, "</p><p>").replace(/^(?!<[hut]|<li)(.+)$/gm, (m, p) => `<p>${p}</p>`);
+
+    return html;
+  }
+
+  async function runPipeline() {
+    const topic = document.getElementById("topic").value.trim();
+    const urls = document.getElementById("urls").value.trim();
+
+    if (!topic && currentMode !== "analyze") {
+      document.getElementById("topic").focus();
+      return;
+    }
+
+    fullText = "";
+    charCount = 0;
+    streaming = true;
+
+    document.getElementById("output-panel").style.display = "block";
+    document.getElementById("output-box").innerHTML = "";
+    document.getElementById("error-box").style.display = "none";
+    document.getElementById("export-info").style.display = "none";
+    document.getElementById("output-status").className = "output-status running";
+    document.getElementById("output-status").innerHTML = '<div class="spinner"></div> Researching...';
+    document.getElementById("toolbar-actions").innerHTML = '<button class="btn-action btn-stop" onclick="stopStream()">■ Stop</button>';
+    document.getElementById("run-btn").disabled = true;
+
+    setStage(0);
+    document.getElementById("output-panel").scrollIntoView({ behavior: "smooth" });
+
+    abortController = new AbortController();
+
+    try {
+      const res = await fetch("/api/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, mode: currentMode, urls }),
+        signal: abortController.signal
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (evt.error) throw new Error(evt.error);
+            if (evt.text) {
+              fullText += evt.text;
+              charCount += evt.text.length;
+              document.getElementById("output-box").innerHTML = renderMarkdown(fullText) + '<span class="cursor"></span>';
+              if (charCount > 800) setStage(1);
+              if (charCount > 2500) setStage(2);
+            }
+            if (evt.done) {
+              finishStream();
+            }
+          } catch (e) {
+            if (e.message !== "done") throw e;
+          }
+        }
+      }
+
+      if (streaming) finishStream();
+
+    } catch (e) {
+      if (e.name !== "AbortError") {
+        document.getElementById("error-box").style.display = "block";
+        document.getElementById("error-box").textContent = "⚠ " + (e.message || "Something went wrong. Check the server logs.");
+      }
+      streaming = false;
+      document.getElementById("run-btn").disabled = false;
+    }
+  }
+
+  function finishStream() {
+    streaming = false;
+    setStage(3);
+    document.getElementById("output-box").innerHTML = renderMarkdown(fullText);
+    document.getElementById("output-status").className = "output-status done";
+    document.getElementById("output-status").innerHTML = "✓ Pipeline complete";
+    document.getElementById("toolbar-actions").innerHTML = `
+      <button class="btn-action btn-notion" onclick="copyNotion()">📋 Copy for Notion</button>
+      <button class="btn-action btn-pdf" onclick="downloadPDF()">📄 Download PDF</button>
+      <button class="btn-action" onclick="resetApp()">+ New research</button>
+    `;
+    document.getElementById("export-info").style.display = "flex";
+    document.getElementById("run-btn").disabled = false;
+  }
+
+  function stopStream() {
+    if (abortController) abortController.abort();
+    streaming = false;
+    finishStream();
+  }
+
+  function resetApp() {
+    document.getElementById("output-panel").style.display = "none";
+    document.getElementById("topic").value = "";
+    document.getElementById("urls").value = "";
+    fullText = "";
+    setStage(-1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function copyNotion() {
+    const topic = document.getElementById("topic").value.trim();
+    const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const notionText = `# AI Research Brief: ${topic}\n> Generated: ${date} | Pipeline: Scout → Analyze → Digest\n\n---\n\n${fullText}\n\n---\n*Generated by AI Research Pipeline · Powered by Claude*`;
+    navigator.clipboard.writeText(notionText).then(() => {
+      const btn = document.querySelector(".btn-notion");
+      const orig = btn.innerHTML;
+      btn.innerHTML = "✓ Copied!";
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const topic = document.getElementById("topic").value.trim();
+    const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const pageW = 210, pageH = 297;
+    const margin = 18, contentW = pageW - margin * 2;
+    let y = margin;
+
+    function checkPage(needed = 10) {
+      if (y + needed > pageH - margin) { doc.addPage(); y = margin; }
+    }
+
+    // Cover strip
+    doc.setFillColor(108, 99, 255);
+    doc.rect(0, 0, pageW, 36, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("AI Research Brief", margin, 16);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(topic || "Research Report", margin, 25);
+    doc.setFontSize(9);
+    doc.text(`Generated: ${date}  |  Scout · Analyze · Digest`, margin, 32);
+    y = 46;
+
+    // Parse and render content
+    const lines = fullText.split("\n");
+    for (const line of lines) {
+      checkPage(8);
+
+      if (line.startsWith("## ")) {
+        y += 4;
+        doc.setFillColor(238, 240, 255);
+        doc.rect(margin, y - 5, contentW, 8, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(55, 48, 163);
+        const wrapped = doc.splitTextToSize(line.slice(3), contentW - 4);
+        doc.text(wrapped, margin + 2, y);
+        y += wrapped.length * 6 + 4;
+        doc.setTextColor(31, 41, 55);
+      } else if (line.startsWith("### ")) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(31, 41, 55);
+        const wrapped = doc.splitTextToSize(line.slice(4), contentW);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * 5 + 2;
+      } else if (line.startsWith("| ")) {
+        const cells = line.split("|").filter(c => c.trim() && !c.match(/^[-: ]+$/)).map(c => c.trim());
+        if (cells.length > 0) {
+          const colW = contentW / cells.length;
+          doc.setFontSize(8);
+          checkPage(7);
+          cells.forEach((cell, i) => {
+            const isHeader = lines.indexOf(line) > 0 && lines[lines.indexOf(line) - 1]?.startsWith("## ");
+            doc.setFillColor(isHeader ? 238 : 249, isHeader ? 240 : 250, isHeader ? 255 : 251);
+            doc.rect(margin + i * colW, y - 4, colW, 6, "F");
+            doc.setDrawColor(229, 231, 235);
+            doc.rect(margin + i * colW, y - 4, colW, 6, "S");
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(31, 41, 55);
+            doc.text(cell.slice(0, 30), margin + i * colW + 1, y);
+          });
+          y += 7;
+        }
+      } else if (line.startsWith("- ")) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        const wrapped = doc.splitTextToSize("• " + line.slice(2), contentW - 6);
+        checkPage(wrapped.length * 4 + 2);
+        doc.text(wrapped, margin + 4, y);
+        y += wrapped.length * 4 + 2;
+      } else if (line.trim() === "") {
+        y += 3;
+      } else if (!line.match(/^\|[-: ]+\|/)) {
+        const cleanLine = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\b(STRONG|MODERATE|WEAK)\b/g, "[$1]");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(31, 41, 55);
+        const wrapped = doc.splitTextToSize(cleanLine, contentW);
+        checkPage(wrapped.length * 5 + 2);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * 5 + 2;
+      }
+    }
+
+    // Footer on each page
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(156, 163, 175);
+      doc.text(`AI Research Pipeline · Powered by Claude · ${date}`, margin, pageH - 10);
+      doc.text(`${i} / ${totalPages}`, pageW - margin, pageH - 10, { align: "right" });
+    }
+
+    const filename = `research-brief-${(topic || "report").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}-${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
+  }
+</script>
+
+</body>
+</html>
