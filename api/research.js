@@ -181,11 +181,10 @@ module.exports = async function handler(req, res) {
 
   try {
     const stream = await client.messages.stream({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      messages: [{ role: "user", content: buildPrompt(topic, mode, urls) }],
-    });
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 4000,
+  messages: [{ role: "user", content: buildPrompt(topic, mode, urls) }],
+});
 
     for await (const event of stream) {
       if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
